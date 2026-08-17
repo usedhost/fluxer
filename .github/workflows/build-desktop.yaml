@@ -353,7 +353,7 @@ jobs:
           --step validate_windows_signing_inputs
 
       - name: Azure login for Artifact Signing
-        if: matrix.platform == 'windows'
+        if: false
         uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -361,7 +361,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Write Velopack Trusted Signing metadata
-        if: matrix.platform == 'windows'
+        if: false
         env:
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -384,7 +384,7 @@ jobs:
           --step resolve_windows_unpacked_dir
 
       - name: Sign unpacked Windows binaries with Artifact Signing
-        if: matrix.platform == 'windows'
+        if: false
         uses: azure/artifact-signing-action@c7ab2a863ab5f9a846ddb8265964877ef296ee82
         with:
           endpoint: ${{ secrets.AZURE_ARTIFACT_SIGNING_ENDPOINT }}
@@ -399,7 +399,7 @@ jobs:
           exclude-environment-credential: true
 
       - name: Verify unpacked Windows signatures
-        if: matrix.platform == 'windows'
+        if: false
         working-directory: ${{ env.WORKDIR }}/fluxer_desktop
         env:
           BUILD_CHANNEL: ${{ env.BUILD_CHANNEL }}
@@ -448,7 +448,7 @@ jobs:
           --step build_app_linux
 
       - name: Verify signed Windows artifacts
-        if: matrix.platform == 'windows'
+        if: false
         working-directory: ${{ env.WORKDIR }}/fluxer_desktop
         env:
           BUILD_CHANNEL: ${{ env.BUILD_CHANNEL }}
@@ -487,9 +487,16 @@ jobs:
           --step generate_checksums_windows
 
       - name: Upload artifacts to S3 handoff
+        if: false
         run: >-
           cargo run --locked --quiet --manifest-path ${{ github.workspace }}/_ci/tools/ci/Cargo.toml -- build-desktop
           --step upload_handoff
+
+      - name: Upload artifact to GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: fluxer-desktop-${{ matrix.platform }}-${{ matrix.arch }}
+          path: upload_staging/
 
   upload:
     name: Upload to S3
