@@ -80,7 +80,7 @@ import {
 	showWindow,
 } from '@electron/main/Window';
 import {initializeWindowsVulkanGameCaptureLayer} from '@electron/main/WindowsVulkanGameCaptureLayer';
-import {app, dialog, netLog} from 'electron';
+import {app, dialog, netLog, session} from 'electron';
 import log from 'electron-log';
 
 log.transports.file.level = 'info';
@@ -260,6 +260,8 @@ if (launchConfigurationError) {
 		appendEnabledBlinkFeature(MIDDLE_CLICK_AUTOSCROLL_BLINK_FEATURE);
 	}
 	const disabledChromiumFeatures = new Set(BASE_DISABLED_CHROMIUM_FEATURES);
+	// Permite que o WebRTC descubra IPs da rede local (LAN), contornando o bloqueio UDP público da Oracle
+	disabledChromiumFeatures.add('WebRtcHideLocalIpsWithMdns');
 	const enabledChromiumFeatures = new Set<string>();
 	if (!disableHardwareAccelerationRequested) {
 		addLinuxHardwareVideoEncodeFeatures(enabledChromiumFeatures);
@@ -314,6 +316,7 @@ if (launchConfigurationError) {
 			.then(() => app.whenReady())
 			.then(async () => {
 				log.info('App ready, initializing...');
+				app.commandLine.appendSwitch('force-webrtc-ip-handling-policy', 'default');
 				await runStartupPhaseAsync('launch-net-log', startLaunchNetLog);
 				try {
 					await runStartupPhaseAsync('desktop-debug-info', async () => {
