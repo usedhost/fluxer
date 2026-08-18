@@ -417,7 +417,7 @@ jobs:
           --step create_portable_zip_windows
 
       - name: Package Windows app with Velopack
-        if: matrix.platform == 'windows'
+        if: false
         working-directory: ${{ env.WORKDIR }}/fluxer_desktop
         env:
           BUILD_CHANNEL: ${{ env.BUILD_CHANNEL }}
@@ -426,7 +426,7 @@ jobs:
           --step package_app_windows_velopack
 
       - name: Analyze Velopack nupkg for long paths
-        if: matrix.platform == 'windows'
+        if: false
         working-directory: ${{ env.WORKDIR }}/fluxer_desktop
         env:
           BUILD_VERSION: ${{ env.VERSION }}
@@ -457,7 +457,7 @@ jobs:
           --step verify_windows_signed_artifacts
 
       - name: Prepare artifacts (Windows)
-        if: runner.os == 'Windows'
+        if: false
         run: >-
           cargo run --locked --quiet --manifest-path ${{ github.workspace }}/_ci/tools/ci/Cargo.toml -- build-desktop
           --step prepare_artifacts_windows
@@ -481,7 +481,7 @@ jobs:
           --step generate_checksums_unix
 
       - name: Generate SHA256 checksums (Windows)
-        if: runner.os == 'Windows'
+        if: false
         run: >-
           cargo run --locked --quiet --manifest-path ${{ github.workspace }}/_ci/tools/ci/Cargo.toml -- build-desktop
           --step generate_checksums_windows
@@ -492,11 +492,19 @@ jobs:
           cargo run --locked --quiet --manifest-path ${{ github.workspace }}/_ci/tools/ci/Cargo.toml -- build-desktop
           --step upload_handoff
 
-      - name: Upload artifact to GitHub
+      - name: Upload artifact to GitHub (Unix)
+        if: runner.os != 'Windows'
         uses: actions/upload-artifact@v4
         with:
           name: fluxer-desktop-${{ matrix.platform }}-${{ matrix.arch }}
           path: upload_staging/
+
+      - name: Upload artifact to GitHub (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: fluxer-desktop-${{ matrix.platform }}-${{ matrix.arch }}
+          path: fluxer_desktop/dist-electron/*.zip
 
   upload:
     name: Upload to S3
