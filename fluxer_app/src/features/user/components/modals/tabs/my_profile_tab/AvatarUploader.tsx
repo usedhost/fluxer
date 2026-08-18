@@ -6,12 +6,13 @@ import {
 	ANIMATED_AVATAR_FORMATS,
 	ANIMATED_IMAGE_FORMATS,
 	AVATAR_RECOMMENDED_SIZE_LABEL,
-	IMAGE_MAX_SIZE_LABEL,
 	PREMIUM_PRODUCT_NAME,
 	STATIC_IMAGE_FORMATS,
 } from '@app/features/app/config/I18nDisplayConstants';
+import {GlobalLimits} from '@app/features/app/utils/GlobalLimits';
 import {LimitResolver} from '@app/features/app/utils/LimitResolverAdapter';
 import {isLimitToggleEnabled} from '@app/features/app/utils/LimitUtils';
+import {Limits} from '@app/features/app/utils/UserLimits';
 import type {Gif} from '@app/features/expressions/commands/GifCommands';
 import {AssetCropModal, AssetType} from '@app/features/expressions/components/modals/AssetCropModal';
 import {openAssetSourceModal} from '@app/features/expressions/components/modals/AssetSourceModal';
@@ -36,6 +37,7 @@ import {
 	INVALID_IMAGE_TRY_ANOTHER_DESCRIPTOR,
 } from '@app/features/i18n/utils/CommonMessageDescriptors';
 import {openFilePicker} from '@app/features/messaging/utils/FilePickerUtils';
+import {formatFileSize} from '@app/features/messaging/utils/FileUtils';
 import * as PremiumModalCommands from '@app/features/premium/commands/PremiumModalCommands';
 import {shouldShowPremiumFeatures} from '@app/features/premium/utils/PremiumUtils';
 import {Button} from '@app/features/ui/button/Button';
@@ -172,13 +174,17 @@ export const AvatarUploader = observer(
 			],
 			[canUploadAnimatedAvatar, i18n],
 		);
+
+		const maxUploadSize = GlobalLimits.getAvatarMaxSize();
+		const imageMaxSizeLabel = formatFileSize(maxUploadSize);
+
 		const processAvatarFile = useCallback(
 			async (file: File) => {
-				if (file.size > 10 * 1024 * 1024) {
+				if (file.size > maxUploadSize) {
 					showUserErrorModal(
 						i18n._(COULDN_T_UPLOAD_AVATAR_DESCRIPTOR),
 						i18n._(AVATAR_FILE_IS_TOO_LARGE_PLEASE_CHOOSE_A_DESCRIPTOR, {
-							imageMaxSizeLabel: IMAGE_MAX_SIZE_LABEL,
+							imageMaxSizeLabel,
 						}),
 					);
 					return;
@@ -299,7 +305,7 @@ export const AvatarUploader = observer(
 					)),
 				);
 			},
-			[canUploadAnimatedAvatar, onAvatarChange, i18n],
+			[canUploadAnimatedAvatar, onAvatarChange, i18n, maxUploadSize],
 		);
 		const showAvatarUploadError = useCallback(() => {
 			showUserErrorModal(i18n._(COULDN_T_UPLOAD_AVATAR_DESCRIPTOR), i18n._(INVALID_IMAGE_TRY_ANOTHER_DESCRIPTOR));
@@ -327,13 +333,13 @@ export const AvatarUploader = observer(
 			const uploadHint = canUploadAnimatedAvatar
 				? formatImageUploadRecommendedHint(i18n, {
 						formats: ANIMATED_IMAGE_FORMATS,
-						maxSize: IMAGE_MAX_SIZE_LABEL,
+						maxSize: imageMaxSizeLabel,
 						recommendedSize: AVATAR_RECOMMENDED_SIZE_LABEL,
 					})
 				: shouldShowPremiumFeatures()
 					? formatImageUploadRecommendedHintWithNote(i18n, {
 							formats: STATIC_IMAGE_FORMATS,
-							maxSize: IMAGE_MAX_SIZE_LABEL,
+							maxSize: imageMaxSizeLabel,
 							recommendedSize: AVATAR_RECOMMENDED_SIZE_LABEL,
 							note: i18n._(ANIMATED_AVATARS_REQUIRE_PREMIUM_NOTE_DESCRIPTOR, {
 								animatedAvatarFormats: ANIMATED_AVATAR_FORMATS,
@@ -342,7 +348,7 @@ export const AvatarUploader = observer(
 						})
 					: formatImageUploadRecommendedHint(i18n, {
 							formats: STATIC_IMAGE_FORMATS,
-							maxSize: IMAGE_MAX_SIZE_LABEL,
+							maxSize: imageMaxSizeLabel,
 							recommendedSize: AVATAR_RECOMMENDED_SIZE_LABEL,
 						});
 			openAssetSourceModal({

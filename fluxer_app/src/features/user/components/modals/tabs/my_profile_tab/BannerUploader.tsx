@@ -5,10 +5,11 @@ import {
 	ANIMATED_IMAGE_FORMATS,
 	BANNER_ASPECT_RATIO_LABEL,
 	BANNER_MINIMUM_SIZE_LABEL,
-	IMAGE_MAX_SIZE_LABEL,
 	PREMIUM_PRODUCT_NAME,
 } from '@app/features/app/config/I18nDisplayConstants';
 import {LimitResolver} from '@app/features/app/utils/LimitResolverAdapter';
+import {GlobalLimits} from '@app/features/app/utils/GlobalLimits';
+import {Limits} from '@app/features/app/utils/UserLimits';
 import {isLimitToggleEnabled} from '@app/features/app/utils/LimitUtils';
 import type {Gif} from '@app/features/expressions/commands/GifCommands';
 import {AssetCropModal, AssetType} from '@app/features/expressions/components/modals/AssetCropModal';
@@ -24,6 +25,7 @@ import {
 	INVALID_IMAGE_TRY_ANOTHER_DESCRIPTOR,
 } from '@app/features/i18n/utils/CommonMessageDescriptors';
 import {openFilePicker} from '@app/features/messaging/utils/FilePickerUtils';
+import {formatFileSize} from '@app/features/messaging/utils/FileUtils';
 import * as PremiumModalCommands from '@app/features/premium/commands/PremiumModalCommands';
 import {shouldShowPremiumFeatures} from '@app/features/premium/utils/PremiumUtils';
 import {Button} from '@app/features/ui/button/Button';
@@ -177,13 +179,17 @@ export const BannerUploader = observer(
 				)),
 			);
 		}, [i18n]);
+
+		const maxUploadSize = GlobalLimits.getAvatarMaxSize();
+		const imageMaxSizeLabel = formatFileSize(maxUploadSize);
+
 		const processBannerFile = useCallback(
 			async (file: File) => {
-				if (file.size > 10 * 1024 * 1024) {
+				if (file.size > maxUploadSize) {
 					showUserErrorModal(
 						i18n._(COULDN_T_UPLOAD_BANNER_DESCRIPTOR),
 						i18n._(BANNER_FILE_IS_TOO_LARGE_PLEASE_CHOOSE_A_DESCRIPTOR, {
-							imageMaxSizeLabel: IMAGE_MAX_SIZE_LABEL,
+							imageMaxSizeLabel: imageMaxSizeLabel,
 						}),
 					);
 					return;
@@ -218,7 +224,7 @@ export const BannerUploader = observer(
 					)),
 				);
 			},
-			[i18n, onBannerChange],
+			[i18n, onBannerChange, imageMaxSizeLabel, maxUploadSize],
 		);
 		const showBannerUploadError = useCallback(() => {
 			showUserErrorModal(i18n._(COULDN_T_UPLOAD_BANNER_DESCRIPTOR), i18n._(INVALID_IMAGE_TRY_ANOTHER_DESCRIPTOR));
@@ -251,14 +257,14 @@ export const BannerUploader = observer(
 				title: i18n._(CHANGE_BANNER_DESCRIPTOR),
 				uploadHint: formatImageUploadMinimumHint(i18n, {
 					formats: ANIMATED_IMAGE_FORMATS,
-					maxSize: IMAGE_MAX_SIZE_LABEL,
+					maxSize: imageMaxSizeLabel,
 					minimumSize: BANNER_MINIMUM_SIZE_LABEL,
 					aspectRatio: BANNER_ASPECT_RATIO_LABEL,
 				}),
 				onPickUpload: handlePickBannerFile,
 				onSelectGif: (gif) => void handleSelectBannerGif(gif),
 			});
-		}, [canUploadBanner, handlePickBannerFile, handleSelectBannerGif, i18n, showBannerPremiumUpsell]);
+		}, [canUploadBanner, handlePickBannerFile, handleSelectBannerGif, i18n, showBannerPremiumUpsell, imageMaxSizeLabel]);
 		const handleModeChange = useCallback(
 			(mode: BannerMode) => {
 				if (mode === 'custom') {

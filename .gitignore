@@ -61,3 +61,5 @@
 
 **/.DS_Store
 **/Thumbs.db
+dist.tar.gz
+fluxer_desktop/tmp_asar/
