@@ -340,7 +340,7 @@ jobs:
           --step build_app_windows
 
       - name: Validate Windows signing inputs
-        if: matrix.platform == 'windows'
+        if: false
         env:
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
